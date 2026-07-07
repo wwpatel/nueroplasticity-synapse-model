@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SynapseLog — Neuroplasticity Habit Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root{
     --bg:#07060d; --panel:#0f0d19; --panel2:#16132420; --panel2:#161326; --border:#2a2440;
@@ -110,10 +111,34 @@
   .badge{display:inline-block;background:rgba(129,140,248,.18);color:var(--accent);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;margin-left:8px;}
   ::-webkit-scrollbar{width:8px;height:8px;}
   ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+  #auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .auth-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:30px 28px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .auth-card input{margin-top:2px;}
+  code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px;}
 </style>
 </head>
 <body>
-<div class="app">
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="brand" style="padding-bottom:22px;justify-content:center;">
+      <div class="logo">◈</div>
+      <div><h1 class="uc" style="font-size:16px;">Synapse</h1><p>how habits rewire the brain</p></div>
+    </div>
+    <div id="auth-config-warning" style="display:none;" class="research-box">
+      Supabase isn't configured yet. Set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> near the top of the script in index.html, then reload.
+    </div>
+    <form id="auth-form">
+      <div style="margin-bottom:12px;"><label class="small">Email</label><input type="email" id="auth-email" required placeholder="you@example.com"></div>
+      <div style="margin-bottom:16px;"><label class="small">Password</label><input type="password" id="auth-password" required minlength="6" placeholder="At least 6 characters"></div>
+      <button class="primary" type="submit" id="auth-submit" style="width:100%;">Sign In</button>
+      <p id="auth-error" style="color:var(--bad);font-size:12.5px;margin-top:10px;display:none;"></p>
+      <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted);">
+        <span id="auth-toggle-text">Don't have an account?</span> <a href="#" id="auth-toggle" style="color:var(--accent);">Sign up</a>
+      </p>
+    </form>
+  </div>
+</div>
+<div class="app" id="app-root" style="display:none;">
   <div class="sidebar">
     <div class="brand">
       <div class="logo">◈</div>
@@ -124,7 +149,11 @@
     <div class="nav-btn" data-view="brain"><span class="ic">🧩</span> Brain Explorer</div>
     <div class="nav-btn" data-view="history"><span class="ic">📅</span> History</div>
     <div class="nav-btn" data-view="sources"><span class="ic">📖</span> Sources</div>
-    <div class="sidebar-foot">Illustrative model inspired by peer-reviewed neuroscience research. Not a medical or diagnostic tool.</div>
+    <div class="sidebar-foot">
+      <div id="auth-user-email" style="color:var(--text);font-size:12px;margin-bottom:8px;word-break:break-all;"></div>
+      <div class="nav-btn" id="sign-out-btn" style="margin:0 0 10px 0;"><span class="ic">⎋</span> Sign out</div>
+      Illustrative model inspired by peer-reviewed neuroscience research. Not a medical or diagnostic tool.
+    </div>
   </div>
 
   <div class="main">
@@ -209,6 +238,16 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script>
+/* ---------- SUPABASE CONFIG ----------
+   Create a free project at https://supabase.com, then Settings > API,
+   and paste your Project URL + anon public key below. */
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const supabaseConfigured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
+const sb = supabaseConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+let currentUser = null;
+let authMode = "signin";
+
 /* ---------- DATA ---------- */
 const BRAIN_REGIONS = [
   {id:"pfc", name:"Prefrontal Cortex", metric:"Executive Control & Focus", color:"#7dd3fc", cx:95, cy:130, r:50,
@@ -307,7 +346,6 @@ const SOURCES = [
 ];
 
 /* ---------- STATE ---------- */
-const STORAGE_KEY = "synapselog_v1";
 let state = null;
 
 function todayKey(d){ d = d || new Date(); return d.toISOString().slice(0,10); }
@@ -352,14 +390,31 @@ function defaultState(){
   BRAIN_REGIONS.forEach(r=>rs[r.id]=50);
   return {logs:[], regionStrength:rs, lastLoadDate: todayKey()};
 }
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return null;
-    return JSON.parse(raw);
-  }catch(e){ return null; }
+
+/* ---- Supabase-backed persistence (per signed-in user) ---- */
+function logToRow(log){
+  return {
+    id: log.id, user_id: currentUser.id, base: log.base, cat: log.cat,
+    level: log.level, level_mult: log.levelMult, duration: log.duration,
+    dur_mult: log.durMult, time: log.time, date_key: log.dateKey, ts: log.ts, note: log.note||""
+  };
 }
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function rowToLog(r){
+  return {id:r.id, base:r.base, cat:r.cat, level:r.level, levelMult:r.level_mult, duration:r.duration, durMult:r.dur_mult, time:r.time, dateKey:r.date_key, ts:r.ts, note:r.note||""};
+}
+async function dbLoadAll(){
+  const {data:profile} = await sb.from("profiles").select("*").eq("user_id", currentUser.id).maybeSingle();
+  const {data:logRows} = await sb.from("logs").select("*").eq("user_id", currentUser.id).order("ts");
+  if(!profile) return null;
+  return {logs:(logRows||[]).map(rowToLog), regionStrength:profile.region_strength, lastLoadDate:profile.last_load_date};
+}
+async function dbSaveProfile(){
+  await sb.from("profiles").upsert({user_id:currentUser.id, region_strength:state.regionStrength, last_load_date:state.lastLoadDate});
+}
+async function dbInsertLog(log){ await sb.from("logs").insert(logToRow(log)); }
+async function dbInsertLogs(logs){ await sb.from("logs").insert(logs.map(logToRow)); }
+async function dbDeleteLog(id){ await sb.from("logs").delete().eq("id", id).eq("user_id", currentUser.id); }
+async function dbClearAll(){ await sb.from("logs").delete().eq("user_id", currentUser.id); await dbSaveProfile(); }
 
 function applyLogEffect(log){
   const weights = CATEGORIES[log.cat].weights;
@@ -444,62 +499,100 @@ function nearestRegion(x,y,z){
 let BRAIN_POINTS = null;
 function generateBrainPoints(){
   const pts = [];
-  for(let i=0;i<1500;i++){
+  for(let i=0;i<3200;i++){
     let x,y,z;
     const side = Math.random()<0.5 ? -1 : 1;
-    x = side*(0.06+Math.random()*0.94);
+    x = side*(0.05+Math.random()*0.95);
     y = (Math.random()-0.42)*1.7;
     z = (Math.random()-0.35)*1.5;
     const norm = (x/1)**2 + (y/0.95)**2 + (z/1.05)**2;
     if(norm>1) continue;
-    pts.push({x,y,z,region:nearestRegion(x,y,z),size:0.9+Math.random()*1.3,cerebellum:false});
+    pts.push({x,y,z,region:nearestRegion(x,y,z),size:0.55+Math.random()*0.9,phase:Math.random()*Math.PI*2});
   }
-  for(let i=0;i<260;i++){
+  for(let i=0;i<600;i++){
     const x=(Math.random()-0.5)*1.0, y=-0.45-Math.random()*0.35, z=-0.75-Math.random()*0.45;
-    pts.push({x,y,z,region:"cerebellum",size:0.6+Math.random()*0.7,cerebellum:true});
+    pts.push({x,y,z,region:"cerebellum",size:0.4+Math.random()*0.5,phase:Math.random()*Math.PI*2});
   }
-  for(let i=0;i<80;i++){
+  for(let i=0;i<120;i++){
     const t = Math.random();
-    pts.push({x:t*0.18-0.09, y:-0.75-t*0.3, z:-0.35-t*0.25, region:"brainstem",size:0.7,cerebellum:false});
+    pts.push({x:t*0.18-0.09, y:-0.75-t*0.3, z:-0.35-t*0.25, region:"brainstem",size:0.5,phase:Math.random()*Math.PI*2});
   }
   return pts;
 }
 let brainRotation = 0.4;
 let brainPulses = [];
 let mountedBrainCanvases = [];
+let constellationCache = {};
 function pulseRegions(ids){
   const now = performance.now();
   ids.forEach(id=>brainPulses.push({regionId:id, start:now}));
 }
+function getConstellation(regionId){
+  if(constellationCache[regionId]) return constellationCache[regionId];
+  const idxs = [];
+  BRAIN_POINTS.forEach((p,i)=>{ if(p.region===regionId) idxs.push(i); });
+  const lines = [];
+  for(let a=0; a<idxs.length; a+=3){
+    let best=-1, bestD=0.045;
+    for(let b=0;b<idxs.length;b+=3){
+      if(a===b) continue;
+      const pa=BRAIN_POINTS[idxs[a]], pb=BRAIN_POINTS[idxs[b]];
+      const d=(pa.x-pb.x)**2+(pa.y-pb.y)**2+(pa.z-pb.z)**2;
+      if(d<bestD){bestD=d;best=b;}
+    }
+    if(best>=0) lines.push([idxs[a],idxs[best]]);
+  }
+  constellationCache[regionId]=lines;
+  return lines;
+}
 function drawBrainCanvas(inst){
   const {ctx,size,interactive} = inst;
   ctx.clearRect(0,0,size,size);
+  ctx.globalCompositeOperation = "lighter";
   const cx=size/2, cy=size/2*1.05, focal=2.4, scale=size*0.34;
   const cosA=Math.cos(brainRotation), sinA=Math.sin(brainRotation);
   const now = performance.now();
   brainPulses = brainPulses.filter(p=>now-p.start<1400);
-  const projected = [];
-  BRAIN_POINTS.forEach(p=>{
+  const projected = new Array(BRAIN_POINTS.length);
+  for(let i=0;i<BRAIN_POINTS.length;i++){
+    const p = BRAIN_POINTS[i];
     const rx = p.x*cosA + p.z*sinA;
     const rz = -p.x*sinA + p.z*cosA;
     const persp = focal/(focal+rz);
     const sx = cx + rx*scale*persp;
     const sy = cy - p.y*scale*persp;
-    let strength = state.regionStrength[p.region];
-    let baseOp = p.region==="brainstem" ? 0.5 : (strength!==undefined ? 0.22+(strength/100)*0.55 : 0.45);
-    let color = p.region==="brainstem" ? "180,180,200" : hexToRgb(REGION_BY_ID[p.region] ? REGION_BY_ID[p.region].color : "#c9c4ff");
-    let sizeMult = 1;
-    if(interactive && selectedRegionId && p.region===selectedRegionId){ baseOp = Math.min(1,baseOp+0.5); sizeMult=1.6; }
+    projected[i] = {sx,sy,region:p.region,rz};
+    const strength = p.region==="brainstem" ? 60 : state.regionStrength[p.region];
+    const twinkle = 0.82+0.18*Math.sin(now*0.0012+p.phase);
+    let baseOp = (0.18 + (strength/100)*0.4) * twinkle;
+    let color = "220,218,245";
+    let sizeMult = 1, glow = 0;
+    const isSelected = interactive && selectedRegionId && p.region===selectedRegionId;
     const pulse = brainPulses.find(pl=>pl.regionId===p.region);
-    if(pulse){ const t=1-(now-pulse.start)/1400; baseOp=Math.min(1,baseOp+t*0.7); sizeMult=Math.max(sizeMult,1+t*1.2); }
-    const op = clamp(baseOp*persp,0,1);
+    if(isSelected){ color = hexToRgb(REGION_BY_ID[p.region].color); baseOp=Math.min(1,baseOp+0.55); sizeMult=1.7; glow=6; }
+    if(pulse){ const t=1-(now-pulse.start)/1400; color = hexToRgb(REGION_BY_ID[p.region] ? REGION_BY_ID[p.region].color : "#8b7bff"); baseOp=Math.min(1,baseOp+t*0.75); sizeMult=Math.max(sizeMult,1+t*1.4); glow=Math.max(glow,8*t); }
+    const op = clamp(baseOp*clamp(persp,0.4,1.4),0,1);
     ctx.beginPath();
+    ctx.shadowBlur = glow;
+    ctx.shadowColor = `rgb(${color})`;
     ctx.fillStyle = `rgba(${color},${op.toFixed(2)})`;
     const r = p.size*persp*sizeMult*(size/380);
-    ctx.arc(sx,sy,Math.max(0.4,r),0,Math.PI*2);
+    ctx.arc(sx,sy,Math.max(0.35,r),0,Math.PI*2);
     ctx.fill();
-    projected.push({sx,sy,region:p.region,rz});
-  });
+  }
+  if(interactive && selectedRegionId){
+    const lines = getConstellation(selectedRegionId);
+    const col = hexToRgb(REGION_BY_ID[selectedRegionId].color);
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = `rgba(${col},0.35)`;
+    ctx.lineWidth = 0.6;
+    lines.forEach(([a,b])=>{
+      const pa=projected[a], pb=projected[b];
+      if(!pa||!pb) return;
+      ctx.beginPath(); ctx.moveTo(pa.sx,pa.sy); ctx.lineTo(pb.sx,pb.sy); ctx.stroke();
+    });
+  }
+  ctx.globalCompositeOperation = "source-over";
   inst.projected = projected;
 }
 function hexToRgb(hex){
@@ -685,7 +778,7 @@ function renderLogForm(){
     <div style="margin-bottom:12px;"><label class="small">Note (optional)</label><textarea id="f-note" rows="2" placeholder="Anything worth remembering about this session..."></textarea></div>
     <button class="primary" id="f-submit">Log it</button>
   `;
-  document.getElementById("f-submit").addEventListener("click", ()=>{
+  document.getElementById("f-submit").addEventListener("click", async ()=>{
     const level = LEVELS[+document.getElementById("f-level").value];
     const duration = DURATIONS[+document.getElementById("f-duration").value];
     const time = document.getElementById("f-time").value;
@@ -700,11 +793,12 @@ function renderLogForm(){
     };
     state.logs.push(log);
     const {affected, streak} = applyLogEffect(log);
-    saveState();
     render();
     pulseRegions(affected.map(a=>a.id));
     const summary = affected.filter(a=>Math.abs(a.delta)>=0.05).map(a=>`${a.delta>0?"+":""}${a.delta.toFixed(1)} ${REGION_BY_ID[a.id].name}`).join(", ");
     toast(`Logged "${act.name}" — ${streak} day streak — ${summary}`);
+    await dbInsertLog(log);
+    await dbSaveProfile();
   });
 }
 
@@ -765,10 +859,10 @@ function renderHistoryView(){
       <td><button class="ghost" data-id="${l.id}">Delete</button></td>
     </tr>`).join("") || `<tr><td colspan="6" class="subtle">No logs yet.</td></tr>`;
   document.querySelectorAll("#history-body button.ghost").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
+    btn.addEventListener("click", async ()=>{
       state.logs = state.logs.filter(l=>l.id!==btn.dataset.id);
-      saveState();
       renderHistoryView();
+      await dbDeleteLog(btn.dataset.id);
     });
   });
 }
@@ -791,25 +885,95 @@ document.querySelectorAll(".nav-btn").forEach(btn=>{
 });
 document.getElementById("activity-search").addEventListener("input", renderLogView);
 document.getElementById("about-link").addEventListener("click", ()=>switchView("sources"));
-document.getElementById("clear-data-btn").addEventListener("click", ()=>{
+document.getElementById("clear-data-btn").addEventListener("click", async ()=>{
   if(confirm("Clear all logged data? This cannot be undone.")){
     state = defaultState();
-    saveState();
     render();
+    await dbClearAll();
   }
 });
 
-(function init(){
-  const loaded = loadState();
+/* ---------- AUTH ---------- */
+function showApp(){
+  document.getElementById("auth-screen").style.display = "none";
+  document.getElementById("app-root").style.display = "flex";
+  document.getElementById("auth-user-email").textContent = currentUser.email;
+}
+function showAuthScreen(){
+  document.getElementById("auth-screen").style.display = "flex";
+  document.getElementById("app-root").style.display = "none";
+  if(!supabaseConfigured) document.getElementById("auth-config-warning").style.display = "block";
+}
+async function bootSession(){
+  const loaded = await dbLoadAll();
   if(loaded){
     state = loaded;
     applyDailyDecay();
+    await dbSaveProfile();
   } else {
     state = defaultState();
     seedDemoData();
+    await dbInsertLogs(state.logs);
+    await dbSaveProfile();
   }
-  saveState();
+  showApp();
   switchView("dashboard");
+}
+document.getElementById("auth-toggle").addEventListener("click",(e)=>{
+  e.preventDefault();
+  authMode = authMode==="signin" ? "signup" : "signin";
+  document.getElementById("auth-submit").textContent = authMode==="signin" ? "Sign In" : "Create Account";
+  document.getElementById("auth-toggle-text").textContent = authMode==="signin" ? "Don't have an account?" : "Already have an account?";
+  document.getElementById("auth-toggle").textContent = authMode==="signin" ? "Sign up" : "Sign in";
+});
+document.getElementById("auth-form").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const errEl = document.getElementById("auth-error");
+  errEl.style.display = "none";
+  if(!supabaseConfigured){ errEl.textContent = "Supabase isn't configured yet — see the notice above."; errEl.style.display="block"; return; }
+  const email = document.getElementById("auth-email").value.trim();
+  const password = document.getElementById("auth-password").value;
+  const submitBtn = document.getElementById("auth-submit");
+  submitBtn.disabled = true; submitBtn.textContent = "Please wait...";
+  try{
+    const {data, error} = authMode==="signin"
+      ? await sb.auth.signInWithPassword({email,password})
+      : await sb.auth.signUp({email,password});
+    if(error) throw error;
+    if(authMode==="signup" && !data.session){
+      errEl.style.color = "var(--good)";
+      errEl.textContent = "Account created — check your email to confirm, then sign in.";
+      errEl.style.display = "block";
+      authMode = "signin";
+    } else if(data.session){
+      currentUser = data.user;
+      await bootSession();
+    }
+  }catch(err){
+    errEl.style.color = "var(--bad)";
+    errEl.textContent = err.message || "Something went wrong.";
+    errEl.style.display = "block";
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = authMode==="signin" ? "Sign In" : "Create Account";
+  }
+});
+document.getElementById("sign-out-btn").addEventListener("click", async ()=>{
+  if(sb) await sb.auth.signOut();
+  currentUser = null;
+  state = null;
+  showAuthScreen();
+});
+
+(async function init(){
+  if(!supabaseConfigured){ showAuthScreen(); return; }
+  const {data:{session}} = await sb.auth.getSession();
+  if(session){
+    currentUser = session.user;
+    await bootSession();
+  } else {
+    showAuthScreen();
+  }
 })();
 </script>
 </body>
