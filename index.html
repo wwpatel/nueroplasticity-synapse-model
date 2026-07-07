@@ -519,23 +519,32 @@ function nearestRegion(x,y,z){
 let BRAIN_POINTS = null;
 function generateBrainPoints(){
   const pts = [];
-  for(let i=0;i<3200;i++){
-    let x,y,z;
-    const side = Math.random()<0.5 ? -1 : 1;
-    x = side*(0.05+Math.random()*0.95);
-    y = (Math.random()-0.42)*1.7;
-    z = (Math.random()-0.35)*1.5;
-    const norm = (x/1)**2 + (y/0.95)**2 + (z/1.05)**2;
-    if(norm>1) continue;
-    pts.push({x,y,z,region:nearestRegion(x,y,z),size:0.55+Math.random()*0.9,phase:Math.random()*Math.PI*2});
+  // main cerebral mass: one continuous ellipsoid (no gaps), split by a thin longitudinal fissure
+  const mainR = {x:1.0, y:0.82, z:0.95};
+  for(let i=0;i<4200;i++){
+    const x=(Math.random()*2-1)*mainR.x, y=(Math.random()*2-1)*mainR.y, z=(Math.random()*2-1)*mainR.z;
+    if((x/mainR.x)**2+(y/mainR.y)**2+(z/mainR.z)**2>1) continue;
+    if(Math.abs(x)<0.035) continue;
+    pts.push({x,y,z,region:nearestRegion(x,y,z),size:0.5+Math.random()*0.85,phase:Math.random()*Math.PI*2});
   }
-  for(let i=0;i<600;i++){
-    const x=(Math.random()-0.5)*1.0, y=-0.45-Math.random()*0.35, z=-0.75-Math.random()*0.45;
-    pts.push({x,y,z,region:"cerebellum",size:0.4+Math.random()*0.5,phase:Math.random()*Math.PI*2});
+  // cerebellum: bulge whose center sits right at the main mass's own back-bottom surface,
+  // so it reads as one continuous form instead of a floating separate blob
+  const cbCenter = {x:0, y:-0.6375, z:-0.7225};
+  const cbR = {x:0.5, y:0.38, z:0.4};
+  for(let i=0;i<900;i++){
+    const x=(Math.random()*2-1)*cbR.x, y=(Math.random()*2-1)*cbR.y, z=(Math.random()*2-1)*cbR.z;
+    if((x/cbR.x)**2+(y/cbR.y)**2+(z/cbR.z)**2>1) continue;
+    pts.push({x:cbCenter.x+x, y:cbCenter.y+y, z:cbCenter.z+z, region:"cerebellum", size:0.35+Math.random()*0.45, phase:Math.random()*Math.PI*2});
   }
-  for(let i=0;i<120;i++){
+  // brainstem: short connector starting from the cerebellum center, no gap
+  for(let i=0;i<100;i++){
     const t = Math.random();
-    pts.push({x:t*0.18-0.09, y:-0.75-t*0.3, z:-0.35-t*0.25, region:"brainstem",size:0.5,phase:Math.random()*Math.PI*2});
+    const jitter = 0.05;
+    pts.push({
+      x:(Math.random()*2-1)*jitter,
+      y:cbCenter.y + t*(-0.34), z:cbCenter.z + t*(0.2)+(Math.random()*2-1)*jitter,
+      region:"brainstem", size:0.45, phase:Math.random()*Math.PI*2
+    });
   }
   return pts;
 }
@@ -583,8 +592,8 @@ function drawBrainCanvas(inst){
     const sy = cy - p.y*scale*persp;
     projected[i] = {sx,sy,region:p.region,rz};
     const strength = p.region==="brainstem" ? 60 : state.regionStrength[p.region];
-    const twinkle = 0.82+0.18*Math.sin(now*0.0012+p.phase);
-    let baseOp = (0.18 + (strength/100)*0.4) * twinkle;
+    const twinkle = 0.9+0.1*Math.sin(now*0.0012+p.phase);
+    let baseOp = (0.3 + (strength/100)*0.42) * twinkle;
     let color = "232,228,255";
     let sizeMult = 1, glow = 0;
     const isSelected = interactive && selectedRegionId && p.region===selectedRegionId;
