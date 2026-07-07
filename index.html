@@ -129,33 +129,141 @@
   .badge{display:inline-block;background:rgba(124,111,240,.18);color:var(--accent);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;margin-left:8px;}
   ::-webkit-scrollbar{width:8px;height:8px;}
   ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
-  #auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
   .auth-card{width:100%;max-width:380px;background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid var(--border);border-radius:16px;padding:30px 28px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
   .auth-card input{margin-top:2px;}
   code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px;}
   .fade-in{animation:panelFade .25s ease;}
   @keyframes panelFade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ---- Pre-auth agency aesthetic: landing page + auth background ---- */
+  #landing-screen{background:var(--bg);color:var(--text-primary);overflow-x:hidden;}
+  .landing-nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:20px 5vw;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);background:rgba(10,10,15,.55);border-bottom:1px solid var(--border);}
+  .landing-nav .brand{padding:0;}
+  .landing-nav-actions{display:flex;align-items:center;gap:22px;}
+  .text-link{color:var(--text-secondary);cursor:pointer;transition:color .2s ease;}
+  .text-link:hover{color:var(--text-primary);}
+  .pill-btn{background:var(--accent);color:#fff;border:none;padding:11px 24px;border-radius:999px;font-size:13.5px;font-weight:600;cursor:pointer;transition:filter .2s ease,box-shadow .2s ease,transform .2s ease;white-space:nowrap;font-family:var(--font-sans);}
+  .pill-btn:hover{filter:brightness(1.12);box-shadow:0 0 24px rgba(124,111,240,.45);transform:translateY(-1px);}
+  .pill-btn.large{padding:16px 34px;font-size:15px;}
+  .hero{position:relative;min-height:92vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 6vw 60px 6vw;}
+  .hero-brain{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:.9;}
+  .hero-headline{position:relative;font-size:clamp(40px,9vw,110px);line-height:0.98;font-weight:600;letter-spacing:-0.02em;margin:0;}
+  .hero-headline span{display:block;}
+  .accent{color:var(--accent);}
+  .hero-sub{position:relative;max-width:520px;margin:26px 0 34px 0;color:var(--text-secondary);font-size:16px;line-height:1.6;}
+  .hero-cta{position:relative;}
+  section.landing-section{padding:110px 6vw;max-width:1100px;margin:0 auto;}
+  .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:22px;margin-top:40px;}
+  .feature-card{background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid var(--border);border-radius:var(--radius);padding:26px 22px;transition:border-color .2s ease;}
+  .feature-card:hover{border-color:var(--border-active);}
+  .feature-card .ficon{width:34px;height:34px;border-radius:10px;background:rgba(124,111,240,.15);display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:16px;}
+  .feature-card h3{font-family:var(--font-serif);font-weight:600;font-size:18px;margin:0 0 8px 0;}
+  .feature-card p{color:var(--text-secondary);font-size:13.5px;line-height:1.6;margin:0;}
+  .science-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:36px;}
+  .science-card{border:1px solid var(--border);border-radius:12px;padding:18px;}
+  .science-card .inst{color:var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+  .science-card p{font-size:13px;color:var(--text-secondary);line-height:1.55;margin:0;}
+  .closing-cta{text-align:center;padding:140px 6vw;}
+  .closing-headline{font-size:clamp(34px,7vw,84px);line-height:1;font-weight:600;letter-spacing:-0.02em;margin:0 0 40px 0;}
+  .closing-headline span{display:block;}
+  .landing-footer{text-align:center;padding:40px 6vw 60px 6vw;color:var(--text-secondary);font-size:10.5px;}
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s ease;}
+  .reveal.in-view{opacity:1;transform:translateY(0);}
+
+  #auth-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden;background:var(--bg);}
+  .auth-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.45;pointer-events:none;}
+  .auth-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;}
+  .auth-back{margin-bottom:26px;cursor:pointer;color:var(--text-secondary);transition:color .2s ease;}
+  .auth-back:hover{color:var(--text-primary);}
+  .auth-headline{font-size:clamp(26px,5vw,42px);margin:0 0 28px 0;text-align:center;}
+  @media(max-width:640px){ .landing-nav{padding:16px 5vw;} .hero{padding:60px 6vw 40px 6vw;} section.landing-section{padding:70px 6vw;} .closing-cta{padding:90px 6vw;} }
 </style>
 </head>
 <body>
-<div id="auth-screen">
-  <div class="auth-card">
-    <div class="brand" style="padding-bottom:22px;justify-content:center;">
+<div id="landing-screen" style="display:none;">
+  <nav class="landing-nav">
+    <div class="brand">
       <div class="logo">◈</div>
-      <div><h1 class="uc" style="font-size:16px;font-weight:800;letter-spacing:.03em;color:var(--text-primary);">Synapse</h1><p>how habits rewire the brain</p></div>
+      <div><h1 class="uc" style="font-size:15px;font-weight:800;letter-spacing:.03em;color:var(--text-primary);margin:0;">Synapse</h1></div>
     </div>
-    <div id="auth-config-warning" style="display:none;" class="research-box">
-      Supabase isn't configured yet. Set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> near the top of the script in index.html, then reload.
+    <div class="landing-nav-actions">
+      <span class="text-link uc" id="landing-signin-link">Sign in</span>
+      <button class="pill-btn" id="landing-getstarted-btn">Get Started</button>
     </div>
-    <form id="auth-form">
-      <div style="margin-bottom:12px;"><label class="small">Email</label><input type="email" id="auth-email" required placeholder="you@example.com"></div>
-      <div style="margin-bottom:16px;"><label class="small">Password</label><input type="password" id="auth-password" required minlength="6" placeholder="At least 6 characters"></div>
-      <button class="primary" type="submit" id="auth-submit" style="width:100%;">Sign In</button>
-      <p id="auth-error" style="color:var(--bad);font-size:12.5px;margin-top:10px;display:none;"></p>
-      <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted);">
-        <span id="auth-toggle-text">Don't have an account?</span> <a href="#" id="auth-toggle" style="color:var(--accent);">Sign up</a>
-      </p>
-    </form>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-brain" id="hero-brain-canvas"></div>
+    <h1 class="serif hero-headline">
+      <span>Rewire</span>
+      <span class="accent">Your</span>
+      <span>Brain</span>
+    </h1>
+    <p class="hero-sub">Log real habits — tennis, meditation, doomscrolling — and watch the exact brain circuits research says they reshape.</p>
+    <button class="pill-btn large hero-cta" id="hero-cta-btn">Start Logging — It's Free</button>
+  </section>
+
+  <section class="landing-section reveal">
+    <p class="section-title uc" style="text-align:center;">How it works</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="ficon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+        <h3>Log anything</h3>
+        <p>7,620 loggable combinations across 127 real activities — sports, mindfulness, screens, sleep, and more.</p>
+      </div>
+      <div class="feature-card">
+        <div class="ficon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="7" r="2"/><circle cx="18" cy="7" r="2"/><circle cx="12" cy="17" r="2"/><line x1="7.6" y1="8.2" x2="10.6" y2="15.4"/><line x1="16.4" y1="8.2" x2="13.4" y2="15.4"/><line x1="8" y1="7" x2="16" y2="7"/></svg></div>
+        <h3>Watch it light up</h3>
+        <p>Every log nudges the specific brain regions research ties to that behavior, visualized as a living particle network.</p>
+      </div>
+      <div class="feature-card">
+        <div class="ficon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"/><polyline points="15 6 21 6 21 12"/></svg></div>
+        <h3>Build real streaks</h3>
+        <p>Consistency, not perfection, drives automaticity — tracked against the ~66-day benchmark from UCL research.</p>
+      </div>
+      <div class="feature-card">
+        <div class="ficon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5c2-1 5-1 8 0v13c-3-1-6-1-8 0z"/><path d="M20 5.5c-2-1-5-1-8 0v13c3-1 6-1 8 0z"/></svg></div>
+        <h3>Grounded in research</h3>
+        <p>Every effect in the app cites a real study, from Harvard, MIT, NYU, and UCL, not guesswork.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section reveal">
+    <p class="section-title uc" style="text-align:center;">Science-backed</p>
+    <div class="science-row" id="landing-science-row"></div>
+  </section>
+
+  <section class="closing-cta reveal">
+    <h2 class="serif closing-headline">
+      <span>Start</span><span>Rewiring</span><span class="accent">Today</span>
+    </h2>
+    <button class="pill-btn large" id="closing-cta-btn">Create Free Account</button>
+  </section>
+
+  <footer class="landing-footer uc">Illustrative model inspired by peer-reviewed neuroscience research. Not a medical or diagnostic tool.</footer>
+</div>
+
+<div id="auth-screen" style="display:none;">
+  <div class="auth-bg" id="auth-bg-canvas"></div>
+  <div class="auth-content">
+    <div class="auth-back uc" id="auth-back-link">&larr; Synapse</div>
+    <h2 class="serif auth-headline" id="auth-headline">Welcome Back</h2>
+    <div class="auth-card">
+      <div id="auth-config-warning" style="display:none;" class="research-box">
+        Supabase isn't configured yet. Set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> near the top of the script in index.html, then reload.
+      </div>
+      <form id="auth-form">
+        <div style="margin-bottom:12px;"><label class="small">Email</label><input type="email" id="auth-email" required placeholder="you@example.com"></div>
+        <div style="margin-bottom:16px;"><label class="small">Password</label><input type="password" id="auth-password" required minlength="6" placeholder="At least 6 characters"></div>
+        <div style="margin-bottom:16px;display:none;" id="auth-confirm-wrap"><label class="small">Confirm Password</label><input type="password" id="auth-confirm" minlength="6" placeholder="Re-enter your password"></div>
+        <button class="primary" type="submit" id="auth-submit" style="width:100%;">Sign In</button>
+        <p id="auth-error" style="color:var(--bad);font-size:12.5px;margin-top:10px;display:none;"></p>
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted);">
+          <span id="auth-toggle-text">Don't have an account?</span> <a href="#" id="auth-toggle" style="color:var(--accent);">Sign up</a>
+        </p>
+      </form>
+    </div>
   </div>
 </div>
 <div class="app" id="app-root" style="display:none;">
@@ -373,7 +481,7 @@ const SOURCES = [
 ];
 
 /* ---------- STATE ---------- */
-let state = null;
+let state = defaultState(); // decorative default so the pre-auth brain has data to render; replaced by bootSession() after sign-in
 
 function todayKey(d){ d = d || new Date(); return d.toISOString().slice(0,10); }
 function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
@@ -995,16 +1103,56 @@ document.getElementById("clear-data-btn").addEventListener("click", async ()=>{
   }
 });
 
+/* ---------- LANDING (pre-auth agency-style pages) ---------- */
+let scrollRevealInitialized = false;
+function setupScrollReveal(){
+  if(scrollRevealInitialized) return;
+  scrollRevealInitialized = true;
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add("in-view"); });
+  }, {threshold:0.15});
+  document.querySelectorAll("#landing-screen .reveal").forEach(el=>obs.observe(el));
+}
+function renderLandingScience(){
+  document.getElementById("landing-science-row").innerHTML = SOURCES.map(s=>`
+    <div class="science-card">
+      <div class="inst">${s.inst}</div>
+      <p>${s.finding}</p>
+    </div>`).join("");
+}
+function showLanding(){
+  document.getElementById("landing-screen").style.display = "block";
+  document.getElementById("auth-screen").style.display = "none";
+  document.getElementById("app-root").style.display = "none";
+  mountBrainCanvas(document.getElementById("hero-brain-canvas"), 520, false);
+  renderLandingScience();
+  setupScrollReveal();
+}
+["landing-signin-link"].forEach(id=>document.getElementById(id).addEventListener("click", ()=>{ authMode="signin"; showAuthScreen(); }));
+["landing-getstarted-btn","hero-cta-btn","closing-cta-btn"].forEach(id=>document.getElementById(id).addEventListener("click", ()=>{ authMode="signup"; showAuthScreen(); }));
+document.getElementById("auth-back-link").addEventListener("click", ()=>showLanding());
+
 /* ---------- AUTH ---------- */
+function applyAuthMode(){
+  document.getElementById("auth-submit").textContent = authMode==="signin" ? "Sign In" : "Create Account";
+  document.getElementById("auth-toggle-text").textContent = authMode==="signin" ? "Don't have an account?" : "Already have an account?";
+  document.getElementById("auth-toggle").textContent = authMode==="signin" ? "Sign up" : "Sign in";
+  document.getElementById("auth-headline").textContent = authMode==="signin" ? "Welcome Back" : "Create Your Account";
+  document.getElementById("auth-confirm-wrap").style.display = authMode==="signin" ? "none" : "block";
+}
 function showApp(){
+  document.getElementById("landing-screen").style.display = "none";
   document.getElementById("auth-screen").style.display = "none";
   document.getElementById("app-root").style.display = "flex";
   document.getElementById("auth-user-email").textContent = currentUser.email;
 }
 function showAuthScreen(){
+  document.getElementById("landing-screen").style.display = "none";
   document.getElementById("auth-screen").style.display = "flex";
   document.getElementById("app-root").style.display = "none";
   if(!supabaseConfigured) document.getElementById("auth-config-warning").style.display = "block";
+  applyAuthMode();
+  mountBrainCanvas(document.getElementById("auth-bg-canvas"), 460, false);
 }
 async function bootSession(){
   const loaded = await dbLoadAll();
@@ -1024,9 +1172,7 @@ async function bootSession(){
 document.getElementById("auth-toggle").addEventListener("click",(e)=>{
   e.preventDefault();
   authMode = authMode==="signin" ? "signup" : "signin";
-  document.getElementById("auth-submit").textContent = authMode==="signin" ? "Sign In" : "Create Account";
-  document.getElementById("auth-toggle-text").textContent = authMode==="signin" ? "Don't have an account?" : "Already have an account?";
-  document.getElementById("auth-toggle").textContent = authMode==="signin" ? "Sign up" : "Sign in";
+  applyAuthMode();
 });
 document.getElementById("auth-form").addEventListener("submit", async (e)=>{
   e.preventDefault();
@@ -1035,6 +1181,12 @@ document.getElementById("auth-form").addEventListener("submit", async (e)=>{
   if(!supabaseConfigured){ errEl.textContent = "Supabase isn't configured yet — see the notice above."; errEl.style.display="block"; return; }
   const email = document.getElementById("auth-email").value.trim();
   const password = document.getElementById("auth-password").value;
+  if(authMode==="signup" && password !== document.getElementById("auth-confirm").value){
+    errEl.style.color = "var(--bad)";
+    errEl.textContent = "Passwords don't match.";
+    errEl.style.display = "block";
+    return;
+  }
   const submitBtn = document.getElementById("auth-submit");
   submitBtn.disabled = true; submitBtn.textContent = "Please wait...";
   try{
@@ -1047,6 +1199,7 @@ document.getElementById("auth-form").addEventListener("submit", async (e)=>{
       errEl.textContent = "Account created — check your email to confirm, then sign in.";
       errEl.style.display = "block";
       authMode = "signin";
+      applyAuthMode();
     } else if(data.session){
       currentUser = data.user;
       await bootSession();
@@ -1063,18 +1216,18 @@ document.getElementById("auth-form").addEventListener("submit", async (e)=>{
 document.getElementById("sign-out-btn").addEventListener("click", async ()=>{
   if(sb) await sb.auth.signOut();
   currentUser = null;
-  state = null;
-  showAuthScreen();
+  state = defaultState();
+  showLanding();
 });
 
 (async function init(){
-  if(!supabaseConfigured){ showAuthScreen(); return; }
+  if(!supabaseConfigured){ showLanding(); return; }
   const {data:{session}} = await sb.auth.getSession();
   if(session){
     currentUser = session.user;
     await bootSession();
   } else {
-    showAuthScreen();
+    showLanding();
   }
 })();
 </script>
