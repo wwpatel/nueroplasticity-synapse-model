@@ -241,8 +241,8 @@
 /* ---------- SUPABASE CONFIG ----------
    Create a free project at https://supabase.com, then Settings > API,
    and paste your Project URL + anon public key below. */
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://doqctcxgbjurepqaedao.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcWN0Y3hnYmp1cmVwcWFlZGFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0NDcxODUsImV4cCI6MjA5OTAyMzE4NX0.UahWi2qO59t8UuPx-borAJshfrNYqHvx_4uO_LtSXXM";
 const supabaseConfigured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const sb = supabaseConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 let currentUser = null;
