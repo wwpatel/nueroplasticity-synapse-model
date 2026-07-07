@@ -5,74 +5,85 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SynapseLog — Neuroplasticity Habit Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#07060d; --panel:#0f0d19; --panel2:#16132420; --panel2:#161326; --border:#2a2440;
-    --text:#eae8f5; --muted:#8783a6; --accent:#8b7bff; --accent2:#b39dff;
+    --bg:#0A0A0F; --panel:rgba(15,15,25,0.75); --panel2:#15131f; --border:rgba(255,255,255,0.08); --border-active:rgba(124,111,240,0.55);
+    --text:#F5F5F7; --muted:#8A8A96; --accent:#7C6FF0; --accent2:#9C90F5; --particle:#E8E4FF;
+    --text-primary:#F5F5F7; --text-secondary:#8A8A96;
     --good:#34d399; --bad:#fb7185;
+    --font-serif:'Fraunces',Georgia,serif; --font-sans:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --radius:14px; --blur:20px;
     --pfc:#7dd3fc; --amygdala:#fb7185; --hippocampus:#34d399; --striatum:#fbbf24; --cerebellum:#a78bfa; --dmn:#f472b6;
   }
   *{box-sizing:border-box;}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:radial-gradient(ellipse at 50% 0%,#120f22 0%,#07060d 60%);color:var(--text);letter-spacing:.01em;}
-  .uc{text-transform:uppercase;letter-spacing:.12em;}
+  body{margin:0;font-family:var(--font-sans);background:radial-gradient(ellipse at 50% 0%,#111018 0%,var(--bg) 65%);color:var(--text);letter-spacing:.01em;}
+  .uc{text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--text-secondary);}
+  .serif{font-family:var(--font-serif);font-weight:600;letter-spacing:-0.01em;}
+  .glass{background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));}
   .app{display:flex;min-height:100vh;}
-  .sidebar{width:230px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);padding:20px 14px;display:flex;flex-direction:column;gap:4px;}
+  .sidebar{width:230px;flex-shrink:0;background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border-right:1px solid var(--border);padding:20px 14px;display:flex;flex-direction:column;gap:4px;}
   .brand{display:flex;align-items:center;gap:10px;padding:0 6px 18px 6px;}
-  .brand .logo{font-size:26px;}
+  .brand .logo{font-size:26px;color:var(--accent);}
   .brand h1{font-size:17px;margin:0;line-height:1.2;}
-  .brand p{font-size:11px;color:var(--muted);margin:2px 0 0 0;}
-  .nav-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--muted);cursor:pointer;font-size:14px;border:1px solid transparent;user-select:none;}
-  .nav-btn:hover{background:var(--panel2);color:var(--text);}
-  .nav-btn.active{background:linear-gradient(135deg,rgba(139,123,255,.2),rgba(179,157,255,.1));color:var(--text);border-color:rgba(139,123,255,.5);box-shadow:0 0 16px rgba(139,123,255,.15);}
+  .brand p{font-size:11px;color:var(--text-secondary);margin:2px 0 0 0;}
+  .nav-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--text-secondary);cursor:pointer;font-size:14px;border:1px solid transparent;user-select:none;transition:border-color .2s ease,background .2s ease,color .2s ease;}
+  .nav-btn:hover{background:rgba(255,255,255,.04);color:var(--text);border-color:var(--border);}
+  .nav-btn.active{background:linear-gradient(135deg,rgba(124,111,240,.2),rgba(156,144,245,.1));color:var(--text);border-color:var(--border-active);box-shadow:0 0 16px rgba(124,111,240,.18);}
   .nav-btn .ic{font-size:16px;width:20px;text-align:center;}
-  .sidebar-foot{margin-top:auto;font-size:11px;color:var(--muted);padding:10px 6px;border-top:1px solid var(--border);}
+  .sidebar-foot{margin-top:auto;font-size:11px;color:var(--text-secondary);padding:10px 6px;border-top:1px solid var(--border);}
   .main{flex:1;padding:26px 32px 60px 32px;max-width:1180px;}
-  h2.viewtitle{margin:0 0 4px 0;font-size:22px;}
-  .subtle{color:var(--muted);font-size:13px;margin:0 0 22px 0;}
+  h2.viewtitle{margin:0 0 4px 0;font-size:24px;font-family:var(--font-serif);font-weight:600;letter-spacing:-0.01em;}
+  .subtle{color:var(--text-secondary);font-size:13px;margin:0 0 22px 0;}
   .grid{display:grid;gap:16px;}
   .cards{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));}
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px;}
-  .card .num{font-size:26px;font-weight:700;}
-  .card .lbl{font-size:12px;color:var(--muted);margin-top:2px;}
-  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;}
-  .section-title{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 12px 0;}
+  .card{background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;transition:border-color .2s ease;}
+  .card .num{font-size:28px;font-weight:600;font-family:var(--font-serif);}
+  .card .lbl{font-size:11px;color:var(--text-secondary);margin-top:2px;text-transform:uppercase;letter-spacing:.08em;}
+  .panel{background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:border-color .2s ease;}
+  .section-title{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px 0;font-weight:600;}
   .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
   .bar-row .swatch{width:11px;height:11px;border-radius:3px;flex-shrink:0;}
   .bar-row .name{width:190px;font-size:13px;flex-shrink:0;}
   .bar-track{flex:1;height:10px;background:var(--panel2);border-radius:6px;overflow:hidden;}
   .bar-fill{height:100%;border-radius:6px;transition:width .5s ease;}
-  .bar-val{width:34px;text-align:right;font-size:12px;color:var(--muted);}
+  .bar-val{width:34px;text-align:right;font-size:12px;color:var(--text-secondary);}
   .two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;}
   @media(max-width:900px){.two-col{grid-template-columns:1fr;} .app{flex-direction:column;} .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;} .sidebar-foot{display:none;}}
   .feed-item{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
   .feed-item:last-child{border-bottom:none;}
-  .feed-item .tag{font-size:10px;color:var(--muted);}
+  .feed-item .tag{font-size:10px;color:var(--text-secondary);}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
-  .chip{padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:var(--panel2);font-size:12.5px;cursor:pointer;color:var(--muted);}
-  .chip.active{background:var(--accent);color:#0b0e14;border-color:var(--accent);font-weight:600;}
+  .chip{padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:var(--panel2);font-size:12.5px;cursor:pointer;color:var(--text-secondary);transition:border-color .2s ease,color .2s ease;}
+  .chip:hover{border-color:var(--border-active);color:var(--text);}
+  .chip.active{background:var(--accent);color:#0A0A0F;border-color:var(--accent);font-weight:600;}
   input[type=text],input[type=date],select,textarea{
-    background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 11px;font-size:13.5px;width:100%;font-family:inherit;
+    background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 11px;font-size:13.5px;width:100%;font-family:inherit;transition:border-color .2s ease;
   }
+  input[type=text]:focus,input[type=date]:focus,select:focus,textarea:focus{outline:none;border-color:var(--border-active);}
   .search-wrap{margin-bottom:14px;}
   .activity-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;max-height:420px;overflow-y:auto;padding-right:4px;}
-  .activity-card{background:var(--panel2);border:1px solid var(--border);border-left:3px solid transparent;border-radius:8px;padding:11px 13px;cursor:pointer;font-size:13px;transition:border-color .15s,box-shadow .15s;}
-  .activity-card:hover{border-color:var(--accent);}
-  .activity-card.selected{border-color:var(--accent);border-left-color:var(--accent);background:rgba(139,123,255,.08);box-shadow:0 0 18px rgba(139,123,255,.12);}
+  .activity-card{background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid var(--border);border-left:4px solid transparent;border-radius:var(--radius);padding:11px 13px;cursor:pointer;font-size:13px;transition:border-color .2s ease,box-shadow .2s ease,background .2s ease;}
+  .activity-card:hover{border-color:var(--border-active);}
+  .activity-card.selected{border-color:var(--border-active);border-left-color:var(--accent);background:rgba(124,111,240,.09);box-shadow:0 0 22px rgba(124,111,240,.18);}
   .activity-card .row1{display:flex;justify-content:space-between;align-items:baseline;}
-  .activity-card .day{font-size:10px;color:var(--muted);letter-spacing:.08em;}
-  .activity-card .cat{font-size:10.5px;color:var(--accent2);margin-top:4px;letter-spacing:.03em;opacity:.85;}
+  .activity-card strong{color:var(--text-primary);}
+  .activity-card .day{font-size:10px;color:var(--text-secondary);letter-spacing:.08em;text-transform:uppercase;}
+  .activity-card .cat{font-size:10.5px;color:var(--text-secondary);margin-top:4px;letter-spacing:.03em;}
   .activity-card .streak{font-size:11px;color:#fbbf24;margin-top:4px;}
   .activity-card .miniprog{height:2px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden;}
-  .activity-card .miniprog i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+  .activity-card .miniprog i{display:block;height:100%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
   .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}
   .log-form{margin-top:18px;padding-top:18px;border-top:1px solid var(--border);}
   .form-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
   @media(max-width:800px){.form-row{grid-template-columns:1fr 1fr;}}
-  label.small{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;}
-  button.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#0b0e14;font-weight:700;padding:11px 20px;border-radius:10px;cursor:pointer;font-size:14px;}
-  button.primary:hover{filter:brightness(1.08);}
-  button.ghost{background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;}
-  button.ghost:hover{color:var(--text);border-color:var(--accent);}
+  label.small{font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px;}
+  button.primary{background:var(--accent);border:none;color:#F5F5F7;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer;font-size:14px;transition:filter .2s ease,box-shadow .2s ease;}
+  button.primary:hover{filter:brightness(1.1);box-shadow:0 0 20px rgba(124,111,240,.35);}
+  button.ghost{background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:border-color .2s ease,color .2s ease;}
+  button.ghost:hover{color:var(--text);border-color:var(--border-active);}
   .brain-wrap{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;}
   svg.brain{overflow:visible;}
   .region{cursor:pointer;transition:filter .2s;stroke:rgba(255,255,255,.25);stroke-width:1;}
@@ -84,15 +95,22 @@
     100%{filter:brightness(1) drop-shadow(0 0 0px currentColor);}
   }
   .legend{display:flex;flex-direction:column;gap:8px;min-width:210px;}
-  .legend-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;border:1px solid transparent;}
-  .legend-item:hover{background:var(--panel2);}
-  .legend-item.active{background:var(--panel2);border-color:var(--accent);}
+  .legend-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:13px;border:1px solid transparent;transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;}
+  .legend-item:hover{background:rgba(255,255,255,.04);border-color:var(--border);}
+  .legend-item.active{background:rgba(124,111,240,.08);border-color:var(--border-active);box-shadow:0 0 16px rgba(124,111,240,.15);}
   .legend-item .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
   .region-detail{margin-top:18px;}
-  .region-detail h3{margin:0 0 4px 0;font-size:19px;}
-  .region-detail .metric{color:var(--muted);font-size:12.5px;margin-bottom:10px;}
+  .region-detail h3{margin:0 0 4px 0;font-size:22px;font-family:var(--font-serif);font-weight:600;}
+  .region-detail .metric{color:var(--text-secondary);font-size:12.5px;margin-bottom:10px;}
   .research-box{background:var(--panel2);border-left:3px solid var(--accent);padding:12px 14px;border-radius:0 8px 8px 0;font-size:13px;line-height:1.5;margin:12px 0;}
   .research-box a{color:var(--accent);}
+  .hemi-pill{display:inline-block;font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-secondary);border:1px solid var(--border);border-radius:999px;padding:2px 8px;white-space:nowrap;}
+  .region-row{border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;transition:border-color .2s ease,box-shadow .2s ease;}
+  .region-row.engaged{border-color:var(--border-active);box-shadow:0 0 14px rgba(124,111,240,.15);}
+  .effect-entry{margin-bottom:14px;}
+  .effect-entry .title{font-weight:600;font-size:13.5px;color:var(--text-primary);margin-bottom:3px;}
+  .effect-entry p{font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin:0 0 4px 0;}
+  .effect-entry .cite{font-size:11.5px;font-style:italic;color:var(--text-secondary);opacity:.75;}
   .effect-lists{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
   .effect-lists h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 8px 0;}
   .effect-lists li{font-size:12.5px;margin-bottom:5px;}
@@ -104,17 +122,19 @@
   th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;}
   .heatgrid{display:grid;grid-template-rows:repeat(7,12px);grid-auto-flow:column;grid-auto-columns:12px;gap:3px;}
   .heatcell{width:12px;height:12px;border-radius:3px;background:var(--panel2);}
-  .source-card{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
-  .source-card h4{margin:0 0 4px 0;font-size:14.5px;}
+  .source-card{background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+  .source-card h4{margin:0 0 4px 0;font-size:14.5px;font-family:var(--font-serif);font-weight:600;}
   .source-card .inst{color:var(--accent);font-size:12px;margin-bottom:8px;}
-  .source-card a{color:var(--muted);font-size:12px;}
-  .badge{display:inline-block;background:rgba(129,140,248,.18);color:var(--accent);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;margin-left:8px;}
+  .source-card a{color:var(--text-secondary);font-size:12px;}
+  .badge{display:inline-block;background:rgba(124,111,240,.18);color:var(--accent);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;margin-left:8px;}
   ::-webkit-scrollbar{width:8px;height:8px;}
   ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
   #auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-  .auth-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:30px 28px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .auth-card{width:100%;max-width:380px;background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid var(--border);border-radius:16px;padding:30px 28px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
   .auth-card input{margin-top:2px;}
   code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px;}
+  .fade-in{animation:panelFade .25s ease;}
+  @keyframes panelFade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 </style>
 </head>
 <body>
@@ -122,7 +142,7 @@
   <div class="auth-card">
     <div class="brand" style="padding-bottom:22px;justify-content:center;">
       <div class="logo">◈</div>
-      <div><h1 class="uc" style="font-size:16px;">Synapse</h1><p>how habits rewire the brain</p></div>
+      <div><h1 class="uc" style="font-size:16px;font-weight:800;letter-spacing:.03em;color:var(--text-primary);">Synapse</h1><p>how habits rewire the brain</p></div>
     </div>
     <div id="auth-config-warning" style="display:none;" class="research-box">
       Supabase isn't configured yet. Set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> near the top of the script in index.html, then reload.
@@ -142,7 +162,7 @@
   <div class="sidebar">
     <div class="brand">
       <div class="logo">◈</div>
-      <div><h1 class="uc" style="font-size:15px;">Synapse</h1><p>how habits rewire the brain</p></div>
+      <div><h1 class="uc" style="font-size:15px;font-weight:800;letter-spacing:.03em;color:var(--text-primary);">Synapse</h1><p>how habits rewire the brain</p></div>
     </div>
     <div class="nav-btn active" data-view="dashboard"><span class="ic">📊</span> Dashboard</div>
     <div class="nav-btn" data-view="log"><span class="ic">➕</span> Log Activity</div>
@@ -565,11 +585,13 @@ function drawBrainCanvas(inst){
     const strength = p.region==="brainstem" ? 60 : state.regionStrength[p.region];
     const twinkle = 0.82+0.18*Math.sin(now*0.0012+p.phase);
     let baseOp = (0.18 + (strength/100)*0.4) * twinkle;
-    let color = "220,218,245";
+    let color = "232,228,255";
     let sizeMult = 1, glow = 0;
     const isSelected = interactive && selectedRegionId && p.region===selectedRegionId;
+    const isHovered = interactive && hoverRegionId && p.region===hoverRegionId && p.region!==selectedRegionId;
     const pulse = brainPulses.find(pl=>pl.regionId===p.region);
     if(isSelected){ color = hexToRgb(REGION_BY_ID[p.region].color); baseOp=Math.min(1,baseOp+0.55); sizeMult=1.7; glow=6; }
+    if(isHovered){ color = hexToRgb(REGION_BY_ID[p.region].color); baseOp=Math.min(1,baseOp+0.35); sizeMult=Math.max(sizeMult,1.35); glow=Math.max(glow,4); }
     if(pulse){ const t=1-(now-pulse.start)/1400; color = hexToRgb(REGION_BY_ID[p.region] ? REGION_BY_ID[p.region].color : "#8b7bff"); baseOp=Math.min(1,baseOp+t*0.75); sizeMult=Math.max(sizeMult,1+t*1.4); glow=Math.max(glow,8*t); }
     const op = clamp(baseOp*clamp(persp,0.4,1.4),0,1);
     ctx.beginPath();
@@ -640,6 +662,7 @@ function mountBrainCanvas(containerEl, size, interactive){
 /* ---------- VIEWS ---------- */
 let currentView = "dashboard";
 let selectedRegionId = "pfc";
+let hoverRegionId = null;
 let selectedActivity = null;
 let activeCatFilter = "all";
 
@@ -734,37 +757,53 @@ function renderLogForm(){
   const daysToNext = stage.max<9999 ? (stage.max - streakNow + 1) : null;
   const ring = clamp((streakNow/66)*100,0,100);
   const regionIds = Object.keys(CATEGORIES[act.cat].weights);
+  const primaryRegion = REGION_BY_ID[regionIds[0]];
+  const blurb = streakNow>0
+    ? `${streakNow} consecutive day${streakNow===1?"":"s"} of ${act.name.toLowerCase()}. The ${primaryRegion.name.toLowerCase()} network is being actively reshaped.`
+    : `Not logged yet. Once you start, this will track how ${act.name.toLowerCase()} reshapes the ${primaryRegion.name.toLowerCase()} and ${regionIds.length>1?"related regions":"its circuitry"} over time.`;
   formEl.style.display="block";
   formEl.innerHTML = `
+    <h3 class="serif" style="font-size:26px;margin:0 0 6px 0;">${act.name}</h3>
+    <p style="font-size:13.5px;color:var(--text-secondary);line-height:1.6;max-width:640px;margin:0 0 8px 0;">${blurb}</p>
+    <div class="uc" style="color:var(--accent);font-size:11px;margin-bottom:20px;">Day ${streakNow} · ${stage.name}</div>
     <div class="two-col" style="margin-bottom:18px;">
       <div>
-        <p class="section-title uc">Streak &amp; Stage</p>
+        <p class="section-title">Streak &amp; Stage</p>
         <div style="display:flex;align-items:center;gap:16px;">
           <svg width="72" height="72" viewBox="0 0 72 72">
             <circle cx="36" cy="36" r="30" fill="none" stroke="var(--border)" stroke-width="6"/>
             <circle cx="36" cy="36" r="30" fill="none" stroke="url(#g1)" stroke-width="6" stroke-linecap="round"
               stroke-dasharray="${2*Math.PI*30}" stroke-dashoffset="${2*Math.PI*30*(1-ring/100)}" transform="rotate(-90 36 36)"/>
-            <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8b7bff"/><stop offset="100%" stop-color="#b39dff"/></linearGradient></defs>
-            <text x="36" y="41" text-anchor="middle" font-size="20" fill="var(--text)" font-weight="700">${streakNow}</text>
+            <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7C6FF0"/><stop offset="100%" stop-color="#9C90F5"/></linearGradient></defs>
+            <text x="36" y="42" text-anchor="middle" font-family="Fraunces, serif" font-size="22" fill="var(--text)" font-weight="600">${streakNow}</text>
           </svg>
           <div>
-            <div style="font-size:16px;font-weight:700;">${stage.name}</div>
-            <div class="tag uc" style="color:var(--muted);">${daysToNext? "Day "+dayOfStage+" of stage · "+daysToNext+" days to next" : "Fully automatic"}</div>
+            <div class="serif" style="font-size:17px;">${stage.name}</div>
+            <div class="uc" style="color:var(--text-secondary);">${daysToNext? "Day "+dayOfStage+" of stage · "+daysToNext+" days to next" : "Fully automatic"}</div>
           </div>
         </div>
-        <p style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:10px;">${stage.desc}</p>
+        <p style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-top:10px;">${stage.desc}</p>
         <div style="display:flex;justify-content:space-between;position:relative;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
           ${STAGES.map((s,i)=>`<div style="text-align:${i===0?'left':i===STAGES.length-1?'right':'center'};">
-            <div style="width:8px;height:8px;border-radius:50%;margin:0 auto 4px auto;background:${i<=stageIdx?'var(--accent)':'var(--border)'};"></div>
-            <div class="uc" style="font-size:9.5px;color:${i===stageIdx?'var(--accent2)':'var(--muted)'};">${s.name}</div>
+            <div style="width:8px;height:8px;border-radius:50%;margin:0 auto 4px auto;background:${i<=stageIdx?'var(--accent)':'var(--border)'};${i===stageIdx?'box-shadow:0 0 8px var(--accent);':''}"></div>
+            <div class="uc" style="font-size:9.5px;color:${i===stageIdx?'var(--text-primary)':'var(--text-secondary)'};font-weight:${i===stageIdx?'700':'400'};">${s.name}</div>
           </div>`).join("")}
         </div>
       </div>
       <div>
-        <p class="section-title uc">Regions Engaged</p>
-        ${regionIds.map(rid=>{const r=REGION_BY_ID[rid]; return `<div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
-          <div style="display:flex;justify-content:space-between;"><strong style="font-size:13px;">${r.name}</strong><span class="dot" style="background:${r.color}"></span></div>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5;">${r.metric}</div>
+        <p class="section-title">Regions Engaged</p>
+        ${regionIds.map(rid=>{const r=REGION_BY_ID[rid]; return `<div class="region-row engaged">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+            <strong style="font-size:13px;">${r.name}</strong>
+            <span class="hemi-pill">Bilateral</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:5px;line-height:1.5;">${r.metric}</div>
+        </div>`;}).join("")}
+        <p class="section-title" style="margin-top:18px;">Neuroplasticity Effects</p>
+        ${regionIds.map(rid=>{const r=REGION_BY_ID[rid]; return `<div class="effect-entry">
+          <div class="title">${r.name} — ${r.metric}</div>
+          <p>${r.research}</p>
+          <div class="cite">${r.source}</div>
         </div>`;}).join("")}
       </div>
     </div>
@@ -778,6 +817,7 @@ function renderLogForm(){
     <div style="margin-bottom:12px;"><label class="small">Note (optional)</label><textarea id="f-note" rows="2" placeholder="Anything worth remembering about this session..."></textarea></div>
     <button class="primary" id="f-submit">Log it</button>
   `;
+  formEl.classList.remove("fade-in"); void formEl.offsetWidth; formEl.classList.add("fade-in");
   document.getElementById("f-submit").addEventListener("click", async ()=>{
     const level = LEVELS[+document.getElementById("f-level").value];
     const duration = DURATIONS[+document.getElementById("f-duration").value];
@@ -809,9 +849,13 @@ function renderBrainView(){
   legend.innerHTML = BRAIN_REGIONS.map(r=>`
     <div class="legend-item ${selectedRegionId===r.id?"active":""}" data-region="${r.id}">
       <div class="dot" style="background:${r.color}"></div>
-      <div><div><strong>${r.name}</strong></div><div class="tag" style="color:var(--muted);font-size:11px;">${state.regionStrength[r.id].toFixed(0)}/100</div></div>
+      <div><div><strong>${r.name}</strong></div><div class="tag uc" style="color:var(--text-secondary);">${state.regionStrength[r.id].toFixed(0)}/100</div></div>
     </div>`).join("");
-  legend.querySelectorAll(".legend-item").forEach(el=>el.addEventListener("click",()=>{ selectedRegionId=el.dataset.region; renderBrainView(); }));
+  legend.querySelectorAll(".legend-item").forEach(el=>{
+    el.addEventListener("click",()=>{ selectedRegionId=el.dataset.region; renderBrainView(); });
+    el.addEventListener("mouseenter",()=>{ hoverRegionId=el.dataset.region; });
+    el.addEventListener("mouseleave",()=>{ hoverRegionId=null; });
+  });
 
   const r = REGION_BY_ID[selectedRegionId];
   const detail = document.getElementById("region-detail");
@@ -821,16 +865,25 @@ function renderBrainView(){
   const eroders = BASE_ACTIVITIES.filter(a=>(CATEGORIES[a.cat].weights[r.id]||0) < 0)
     .map(a=>({name:a.name, w:CATEGORIES[a.cat].weights[r.id]})).sort((a,b)=>a.w-b.w).slice(0,5);
   detail.innerHTML = `
-    <h3>${r.name}</h3>
-    <div class="metric">${r.metric} — current score: <strong>${state.regionStrength[r.id].toFixed(0)}/100</strong></div>
-    <div class="bar-track" style="height:12px;"><div class="bar-fill" style="width:${state.regionStrength[r.id]}%;background:${r.color};height:100%;"></div></div>
-    <p style="margin:14px 0;font-size:14px;line-height:1.6;">${r.desc}</p>
-    <div class="research-box">${r.research} <br><br><em>Source: ${r.source}</em> — <a href="${r.url}" target="_blank" rel="noopener">view source</a></div>
+    <h3 class="serif">${r.name}</h3>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <span class="hemi-pill">Bilateral</span>
+      <div class="metric" style="margin:0;">${r.metric} — current score: <strong style="color:var(--text-primary);">${state.regionStrength[r.id].toFixed(0)}/100</strong></div>
+    </div>
+    <div class="bar-track" style="height:8px;margin-bottom:14px;"><div class="bar-fill" style="width:${state.regionStrength[r.id]}%;background:${r.color};height:100%;"></div></div>
+    <p style="margin:14px 0;font-size:14px;line-height:1.6;color:var(--text-secondary);">${r.desc}</p>
+    <p class="section-title" style="margin-top:18px;">Neuroplasticity Effects</p>
+    <div class="effect-entry">
+      <div class="title">${r.metric}</div>
+      <p>${r.research}</p>
+      <div class="cite">${r.source} — <a href="${r.url}" target="_blank" rel="noopener" style="color:var(--accent);">view source</a></div>
+    </div>
     <div class="effect-lists">
       <div><h4>Builds this region</h4><ul>${builders.map(b=>`<li>${b.name}</li>`).join("")||"<li>—</li>"}</ul></div>
       <div><h4>Erodes this region</h4><ul>${eroders.map(b=>`<li>${b.name}</li>`).join("")||"<li>—</li>"}</ul></div>
     </div>
   `;
+  detail.classList.remove("fade-in"); void detail.offsetWidth; detail.classList.add("fade-in");
 }
 
 function renderHistoryView(){
