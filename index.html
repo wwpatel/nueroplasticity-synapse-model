@@ -403,18 +403,18 @@ function rowToLog(r){
   return {id:r.id, base:r.base, cat:r.cat, level:r.level, levelMult:r.level_mult, duration:r.duration, durMult:r.dur_mult, time:r.time, dateKey:r.date_key, ts:r.ts, note:r.note||""};
 }
 async function dbLoadAll(){
-  const {data:profile} = await sb.from("profiles").select("*").eq("user_id", currentUser.id).maybeSingle();
-  const {data:logRows} = await sb.from("logs").select("*").eq("user_id", currentUser.id).order("ts");
+  const {data:profile} = await sb.from("synapse_profiles").select("*").eq("user_id", currentUser.id).maybeSingle();
+  const {data:logRows} = await sb.from("synapse_logs").select("*").eq("user_id", currentUser.id).order("ts");
   if(!profile) return null;
   return {logs:(logRows||[]).map(rowToLog), regionStrength:profile.region_strength, lastLoadDate:profile.last_load_date};
 }
 async function dbSaveProfile(){
-  await sb.from("profiles").upsert({user_id:currentUser.id, region_strength:state.regionStrength, last_load_date:state.lastLoadDate});
+  await sb.from("synapse_profiles").upsert({user_id:currentUser.id, region_strength:state.regionStrength, last_load_date:state.lastLoadDate});
 }
-async function dbInsertLog(log){ await sb.from("logs").insert(logToRow(log)); }
-async function dbInsertLogs(logs){ await sb.from("logs").insert(logs.map(logToRow)); }
-async function dbDeleteLog(id){ await sb.from("logs").delete().eq("id", id).eq("user_id", currentUser.id); }
-async function dbClearAll(){ await sb.from("logs").delete().eq("user_id", currentUser.id); await dbSaveProfile(); }
+async function dbInsertLog(log){ await sb.from("synapse_logs").insert(logToRow(log)); }
+async function dbInsertLogs(logs){ await sb.from("synapse_logs").insert(logs.map(logToRow)); }
+async function dbDeleteLog(id){ await sb.from("synapse_logs").delete().eq("id", id).eq("user_id", currentUser.id); }
+async function dbClearAll(){ await sb.from("synapse_logs").delete().eq("user_id", currentUser.id); await dbSaveProfile(); }
 
 function applyLogEffect(log){
   const weights = CATEGORIES[log.cat].weights;
